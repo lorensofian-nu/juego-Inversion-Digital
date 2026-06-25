@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Sendero de la Riqueza Digital - Exploración Libre</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #21456e;
+            --card-bg: rgba(25, 20, 41, 0.8);
+            --primary-lilac: #db9ddb;
+            --accent-lavender: #f3a3f3;
+            --text-light: #f3effa;
+            --text-muted: #aaa2ba;
+            --border-color: rgba(179, 157, 219, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-light);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(179, 157, 219, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(131, 103, 199, 0.08) 0%, transparent 50%);
+        }
+
+        #game-board {
+            width: 95vw;
+            max-width: 1000px;
+            height: 85vh;
+            max-height: 700px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .top-bar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            background: rgba(10, 7, 18, 0.8);
+            border: 1px solid var(--border-color);
+            padding: 10px 25px;
+            border-radius: 20px;
+            color: var(--primary-lilac);
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .progress-text {
+            color: var(--accent-lavender);
+        }
+
+       
+        #avatar-animal {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            font-size: 2.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: top 1.2s cubic-bezier(0.25, 1, 0.5, 1), left 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.5));
+            transform-origin: center bottom;
+            transform: translate(-50%, -50%);
+        }
+
+        #avatar-animal.walking {
+            animation: bounce-walk 0.4s infinite alternate;
+        }
+
+        @keyframes bounce-walk {
+            0% {
+                transform: translate(-50%, -50%) rotate(-8deg);
+            }
+
+            100% {
+                transform: translate(-50%, -65%) rotate(8deg);
+            }
+        }
+
+        
+        .item-node {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            font-size: 2.2rem;
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            filter: drop-shadow(0 0 15px rgba(179, 157, 219, 0.3));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .item-node:hover {
+            filter: drop-shadow(0 0 25px rgba(179, 157, 219, 0.8));
+            transform: translate(-50%, -55%) scale(1.1);
+        }
+
+        .item-node.collected {
+            transform: translate(-50%, -100px) scale(0);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%);
+            }
+
+            50% {
+                transform: translate(-50%, -60%);
+            }
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #7e57c2, #b39ddb);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(126, 87, 194, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(126, 87, 194, 0.6);
+        }
+
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: rgba(41, 20, 41, 0.95);
+            border: 1px solid var(--primary-lilac);
+            width: 90%;
+            max-width: 500px;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(179, 157, 219, 0.05);
+            transform: translateY(20px);
+            transition: transform 0.4s ease;
+            text-align: center;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            color: var(--accent-lavender);
+            margin-bottom: 15px;
+        }
+
+        p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 12px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s;
+        }
+
+        .option-btn:hover {
+            background: rgba(179, 157, 219, 0.1);
+            border-color: var(--primary-lilac);
+        }
+
+        .option-btn strong {
+            color: var(--primary-lilac);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .fullscreen-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            transition: opacity 0.5s ease;
+        }
+
+        .fullscreen-panel h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--text-light) 30%, var(--primary-lilac) 100%);
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .input-name {
+            background: rgba(25, 20, 41, 0.8);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: white;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .input-name:focus {
+            border-color: var(--primary-lilac);
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="start-panel" class="fullscreen-panel">
+        <div style="font-size: 4rem; margin-bottom: 10px;">🦊</div>
+        <h1>Exploración Digital</h1>
+        <p style="max-width: 450px; margin: 0 auto; color: var(--text-muted);">El mapa está abierto. Haz clic en
+            cualquier objeto para que tu avatar se desplace hacia él. Debes recolectar todos los elementos para
+            descubrir tu destino.</p>
+        <input type="text" id="player-name" class="input-name" value="Sofii" placeholder="Tu nombre...">
+        <button class="btn" onclick="startGame()">Comenzar Exploración</button>
+    </div>
+
+    <div id="game-board">
+        <div class="top-bar">
+            <div>👤 <span id="display-name">Sofii</span></div>
+            <div class="progress-text">Objetos: <span id="items-count">0</span>/6</div>
+        </div>
+
+        <div id="items-container"></div>
+
+        <div id="avatar-animal" style="left: 50%; top: 50%;">🦊</div>
+
+        <div id="question-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div id="modal-icon" class="modal-icon"></div>
+                <h2 id="modal-title"></h2>
+                <p id="modal-desc"></p>
+                <div class="options-grid">
+                    <button class="option-btn" onclick="answerQuestion('A')">
+                        <strong>Opción A</strong> <span id="opt-a-text"></span>
+                    </button>
+                    <button class="option-btn" onclick="answerQuestion('B')">
+                        <strong>Opción B</strong> <span id="opt-b-text"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-panel" class="fullscreen-panel hidden">
+        <div id="result-emoji" style="font-size: 5rem; margin-bottom: 20px;">🌟</div>
+        <h1 id="result-title">El Futuro</h1>
+        <p id="result-text" style="max-width: 500px; margin: 0 auto 30px auto; color: var(--text-muted);"></p>
+        <button class="btn" onclick="location.reload()">Reiniciar Mapa</button>
+    </div>
+
+    <script>
+        const questionBank = {
+            fire: [
+                {
+                    title: "El Fueguito del FOMO",
+                    desc: "Todos en redes hablan de un nuevo token que subió un 500% hoy. Sientes que te quedas fuera.",
+                    optA: "Inviertes sin pensarlo para aprovechar la ola.",
+                    optB: "Respiras y decides no invertir impulsivamente en algo que no conoces."
+                },
+                {
+                    title: "Bot de IA Milagroso",
+                    desc: "Un creador de contenido promociona un 'Bot de Trading con IA' que asegura ganancias diarias.",
+                    optA: "Lo compras inmediatamente con la tarjeta de crédito.",
+                    optB: "Dudas. Investigas el algoritmo y decides confiar en tu propia estrategia."
+                }
+            ],
+            diamond: [
+                {
+                    title: "Presión en el Mercado",
+                    desc: "El mercado global ha caído un 30% en una semana. Tu panel muestra números rojos.",
+                    optA: "Vendes todo asumiendo la pérdida para salvar lo que queda.",
+                    optB: "Haces 'Hold'. Sabes que invertiste en proyectos sólidos a largo plazo."
+                },
+                {
+                    title: "Noticias Alarmantes",
+                    desc: "Un artículo afirma que el ecosistema digital será prohibido mundialmente mañana.",
+                    optA: "Liquidas tus activos por miedo a la noticia.",
+                    optB: "Verificas la fuente original y descubres que es una noticia falsa para generar pánico."
+                }
+            ],
+            chest: [
+                {
+                    title: "Cofre de Rendimientos",
+                    desc: "Una plataforma te envía un correo ofreciendo un 25% mensual garantizado sin riesgo.",
+                    optA: "Transfieres todos tus fondos, es una oportunidad única.",
+                    optB: "Sabes que a mayor rendimiento, mayor riesgo. Lo marcas como estafa."
+                },
+                {
+                    title: "Airdrop Sorpresa",
+                    desc: "Encuentras una web que promete regalarte tokens gratis solo por conectar tu billetera principal.",
+                    optA: "Conectas la billetera y apruebas todos los permisos.",
+                    optB: "Proteges tu capital. Usas una billetera vacía o simplemente lo ignoras."
+                }
+            ]
+        };
+
+        const mapItems = [
+            { id: 1, type: 'fire', icon: '🔥', top: '20%', left: '15%' },
+            { id: 2, type: 'fire', icon: '🔥', top: '75%', left: '85%' },
+            { id: 3, type: 'diamond', icon: '💎', top: '30%', left: '75%' },
+            { id: 4, type: 'diamond', icon: '💎', top: '80%', left: '20%' },
+            { id: 5, type: 'chest', icon: '🧰', top: '55%', left: '45%' },
+            { id: 6, type: 'chest', icon: '🧰', top: '15%', left: '50%' }
+        ];
+
+        let playerName = "Sofii";
+        let scores = { A: 0, B: 0 };
+        let itemsCollected = 0;
+        let isMoving = false;
+        let questionIndexes = { fire: 0, diamond: 0, chest: 0 };
+
+        const avatar = document.getElementById('avatar-animal');
+        const modal = document.getElementById('question-modal');
+
+        function startGame() {
+            const inputVal = document.getElementById('player-name').value;
+            playerName = inputVal ? inputVal : "Sofii";
+            document.getElementById('display-name').textContent = playerName;
+            document.getElementById('start-panel').classList.add('hidden');
+            renderItems();
+        }
+
+        function renderItems() {
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+
+            mapItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'item-node';
+                div.id = `item-${item.id}`;
+                div.innerHTML = item.icon;
+                div.style.top = item.top;
+                div.style.left = item.left;
+                div.onclick = () => moveToItem(item);
+                container.appendChild(div);
+            });
+        }
+
+        function moveToItem(item) {
+            if (isMoving) return;
+            isMoving = true;
+
+            const itemElement = document.getElementById(`item-${item.id}`);
+            avatar.classList.add('walking');
+            avatar.style.left = item.left;
+            avatar.style.top = item.top;
+
+            setTimeout(() => {
+                avatar.classList.remove('walking');
+                collectItem(item, itemElement);
+            }, 1200);
+        }
+
+        function collectItem(item, element) {
+            element.classList.add('collected');
+
+            const index = questionIndexes[item.type];
+            const questionData = questionBank[item.type][index];
+            questionIndexes[item.type]++;
+
+            document.getElementById('modal-icon').textContent = item.icon;
+            document.getElementById('modal-title').textContent = questionData.title;
+            document.getElementById('modal-desc').textContent = questionData.desc;
+            document.getElementById('opt-a-text').textContent = questionData.optA;
+            document.getElementById('opt-b-text').textContent = questionData.optB;
+
+            setTimeout(() => { modal.classList.add('active'); }, 200);
+        }
+
+        function answerQuestion(choice) {
+            scores[choice]++;
+            itemsCollected++;
+            document.getElementById('items-count').textContent = itemsCollected;
+
+            modal.classList.remove('active');
+            isMoving = false;
+
+            if (itemsCollected === mapItems.length) {
+                setTimeout(showEndScreen, 800);
+            }
+        }
+
+        function showEndScreen() {
+            const resultPanel = document.getElementById('result-panel');
+            const title = document.getElementById('result-title');
+            const text = document.getElementById('result-text');
+            const emoji = document.getElementById('result-emoji');
+
+            if (scores.B >= 4) {
+                emoji.textContent = "🦊✨🏛️";
+                title.textContent = "Un Futuro Brillante";
+                title.style.color = "#81c784";
+                text.textContent = `¡Excelente exploración, ${playerName}! Recorriste todo el mapa recolectando fuegos, diamantes y cofres con total sabiduría. Ignoraste el ruido impulsivo y protegiste tu capital. Tu ecosistema digital ahora es robusto y altamente rentable.`;
+            } else {
+                emoji.textContent = "🦊🌧️📉";
+                title.textContent = "Futuro con Escasez";
+                title.style.color = "#e57373";
+                text.textContent = `Has vaciado el mapa, ${playerName}, pero tus decisiones vaciaron tu billetera. Las ofertas falsas de los cofres, el pánico al ver caer tus diamantes y el impulso de los fuegos de tendencia te han dejado en números rojos. Tendrás que reevaluar tu estrategia.`;
+            }
+
+            resultPanel.classList.remove('hidden');
+        }
+    </script>
+
+</body>
+
+</html>
